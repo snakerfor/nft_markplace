@@ -66,13 +66,12 @@ contract MyNFTWithRoyalty is ERC721, ERC721URIStorage, Ownable, IERC2981 {
 
     /**
      * @dev 实现ERC2981标准：获取版税信息 
-     * @param _tokenId Token ID （暂时不需要，但重写需要这个参数）
      * @param salePrice 售价
      * @return receiver 版税接收地址
      * @return royaltyAmount 版税金额
      */
     function royaltyInfo(
-        uint256 _tokenId,
+        uint256,
         uint256 salePrice
     ) external view override returns (
         address receiver,
