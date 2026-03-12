@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title IERC2981
@@ -151,7 +150,7 @@ contract NFTMarketplace is ReentrancyGuard {
      * @param price 售价（wei）
      * @return listingId 挂单ID
      */
-    function listNFT(
+    function listNft(
         address nftContract,
         uint256 tokenId,
         uint256 price
@@ -196,7 +195,7 @@ contract NFTMarketplace is ReentrancyGuard {
      * @dev 下架NFT
      * @param listingId 挂单ID
      */
-    function delistNFT(uint256 listingId) external {
+    function delistNft(uint256 listingId) external {
         Listing storage listing = listings[listingId];
         
         require(listing.active, "Listing not active");
@@ -229,7 +228,7 @@ contract NFTMarketplace is ReentrancyGuard {
      * @param listingId 挂单ID
      * @notice 需要支付足够的ETH，多余部分会自动退还
      */
-    function buyNFT(uint256 listingId) external payable nonReentrant {
+    function buyNft(uint256 listingId) external payable nonReentrant {
         Listing storage listing = listings[listingId];
         
         // 检查挂单状态
