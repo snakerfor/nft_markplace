@@ -7,8 +7,20 @@
   },
   "lib/openzeppelin-contracts": {
     "tag": {
-      "name": "v4.9.5",
-      "rev": "bd325d56b4c62c9c5c1aff048c37c6bb18ac0290"
+      "name": "v5.2.0",
+      "rev": "acd4ff74de833399287ed6b31b4debf6b2b35527"
+    }
+  },
+  "lib/openzeppelin-contracts-upgradeable": {
+    "tag": {
+      "name": "v5.2.0",
+      "rev": "3d5fa5c24c411112bab47bec25cfa9ad0af0e6e8"
+    }
+  },
+  "lib/openzeppelin-foundry-upgrades": {
+    "tag": {
+      "name": "v0.4.0",
+      "rev": "cbce1e00305e943aa1661d43f41e5ac72c662b07"
     }
   }
 }
