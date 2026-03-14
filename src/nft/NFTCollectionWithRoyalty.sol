@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import { ERC721URIStorage } from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IERC2981 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title MyNFTWithRoyalty
  * @dev 支持ERC2981版税标准的NFT合约
  * @notice 继承ERC2981接口，实现版税功能
  */
-contract MyNFTWithRoyalty is ERC721, ERC721URIStorage, Ownable, IERC2981 {
+contract NFTCollectionWithRoyalty is ERC721, ERC721URIStorage, Ownable, IERC2981 {
     uint256 private _tokenIdCounter;
     uint256 public constant MAX_SUPPLY = 10000;
     uint256 public mintPrice = 0.01 ether;
@@ -23,21 +23,14 @@ contract MyNFTWithRoyalty is ERC721, ERC721URIStorage, Ownable, IERC2981 {
     // 版税比例（基点，10000 = 100%）
     uint96 private _royaltyBps = 1000; // 10%
 
-    event NFTMinted(
-        address indexed minter,
-        uint256 indexed tokenId,
-        string uri
-    );
+    event NFTMinted(address indexed minter, uint256 indexed tokenId, string uri);
 
     /**
      * @dev 构造函数
      * @param royaltyReceiver_ 版税接收地址
      * @param royaltyBps_ 版税比例（基点）
      */
-    constructor(
-        address royaltyReceiver_,
-        uint96 royaltyBps_
-    ) ERC721("MyNFTWithRoyalty", "MNFR") Ownable(msg.sender) {
+    constructor(address royaltyReceiver_, uint96 royaltyBps_) ERC721("MyNFTWithRoyalty", "MNFR") Ownable(msg.sender) {
         require(royaltyReceiver_ != address(0), "Invalid royalty receiver");
         require(royaltyBps_ <= 1000, "Royalty too high"); // 最大10%
 
@@ -65,18 +58,17 @@ contract MyNFTWithRoyalty is ERC721, ERC721URIStorage, Ownable, IERC2981 {
     }
 
     /**
-     * @dev 实现ERC2981标准：获取版税信息 
+     * @dev 实现ERC2981标准：获取版税信息
      * @param salePrice 售价
      * @return receiver 版税接收地址
      * @return royaltyAmount 版税金额
      */
-    function royaltyInfo(
-        uint256,
-        uint256 salePrice
-    ) external view override returns (
-        address receiver,
-        uint256 royaltyAmount
-    ) {
+    function royaltyInfo(uint256, uint256 salePrice)
+        external
+        view
+        override
+        returns (address receiver, uint256 royaltyAmount)
+    {
         receiver = _royaltyReceiver;
         royaltyAmount = (salePrice * _royaltyBps) / 10000;
     }
@@ -112,12 +104,7 @@ contract MyNFTWithRoyalty is ERC721, ERC721URIStorage, Ownable, IERC2981 {
     /**
      * @dev 重写tokenURI函数
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
 

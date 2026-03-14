@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import { Script, console } from "forge-std/Script.sol";
-import { Upgrades } from "@openzeppelin-foundry-upgrades/Upgrades.sol";
-import { MyTokenV1 } from "../src/token/MyTokenV1.sol";
-import { MyNFTV1 } from "../src/nft/MyNFTV1.sol";
-import { NFTMarketplaceV1 } from "../src/marketplace/NFTMarketplaceV1.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {Upgrades} from "@openzeppelin-foundry-upgrades/Upgrades.sol";
 
 // 升级时需要修改这些地址
 contract UpgradeScript is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address deployer = vm.addr(deployerPrivateKey);
 
         // 从环境变量读取代理地址
         address tokenProxy = vm.envAddress("TOKEN_PROXY");
@@ -26,27 +22,15 @@ contract UpgradeScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // 升级 Token
-        Upgrades.upgradeProxy(
-            tokenProxy,
-            "src/token/MyTokenV1.sol:MyTokenV1",
-            ""
-        );
+        Upgrades.upgradeProxy(tokenProxy, "src/token/PaymentTokenV1.sol:PaymentTokenV1", "");
         console.log("Token upgraded");
 
         // 升级 NFT
-        Upgrades.upgradeProxy(
-            nftProxy,
-            "src/nft/MyNFTV1.sol:MyNFTV1",
-            ""
-        );
+        Upgrades.upgradeProxy(nftProxy, "src/nft/NFTCollectionV1.sol:NFTCollectionV1", "");
         console.log("NFT upgraded");
 
         // 升级 Marketplace
-        Upgrades.upgradeProxy(
-            marketplaceProxy,
-            "src/marketplace/NFTMarketplaceV1.sol:NFTMarketplaceV1",
-            ""
-        );
+        Upgrades.upgradeProxy(marketplaceProxy, "src/marketplace/NFTMarketplaceV1.sol:NFTMarketplaceV1", "");
         console.log("Marketplace upgraded");
 
         vm.stopBroadcast();

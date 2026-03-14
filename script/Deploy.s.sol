@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import { Script, console } from "forge-std/Script.sol";
-import { Upgrades } from "@openzeppelin-foundry-upgrades/Upgrades.sol";
-import { MyTokenV1 } from "../src/token/MyTokenV1.sol";
-import { MyNFTV1 } from "../src/nft/MyNFTV1.sol";
-import { NFTMarketplaceV1 } from "../src/marketplace/NFTMarketplaceV1.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {Upgrades} from "@openzeppelin-foundry-upgrades/Upgrades.sol";
+import {PaymentTokenV1} from "../src/token/PaymentTokenV1.sol";
+import {NFTCollectionV1} from "../src/nft/NFTCollectionV1.sol";
+import {NFTMarketplaceV1} from "../src/marketplace/NFTMarketplaceV1.sol";
 
 contract DeployScript is Script {
     function run() external {
@@ -27,15 +27,15 @@ contract DeployScript is Script {
 
         // 1. 部署 MyToken (UUPS Proxy)
         address tokenProxy = Upgrades.deployUUPSProxy(
-            "src/token/MyTokenV1.sol:MyTokenV1",
-            abi.encodeCall(MyTokenV1.initialize, (erc20Name, erc20Symbol, erc20Supply, deployer))
+            "src/token/PaymentTokenV1.sol:PaymentTokenV1",
+            abi.encodeCall(PaymentTokenV1.initialize, (erc20Name, erc20Symbol, erc20Supply, deployer))
         );
         console.log("MyToken Proxy deployed at:", tokenProxy);
 
         // 2. 部署 MyNFT (UUPS Proxy)
         address nftProxy = Upgrades.deployUUPSProxy(
-            "src/nft/MyNFTV1.sol:MyNFTV1",
-            abi.encodeCall(MyNFTV1.initialize, ("MyNFT", "MNFT", royaltyReceiver, 1000))
+            "src/nft/NFTCollectionV1.sol:NFTCollectionV1",
+            abi.encodeCall(NFTCollectionV1.initialize, ("MyNFT", "MNFT", royaltyReceiver, 1000))
         );
         console.log("MyNFT Proxy deployed at:", nftProxy);
 

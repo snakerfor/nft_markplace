@@ -1,17 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { ERC721URIStorageUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { ERC2981Upgradeable } from "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {
+    ERC721URIStorageUpgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
 
 /**
  * @title MyNFTV1
  * @dev 可升级的支持ERC2981版税标准的NFT合约
  */
-contract MyNFTV1 is ERC721Upgradeable, ERC721URIStorageUpgradeable, OwnableUpgradeable, UUPSUpgradeable, ERC2981Upgradeable {
+contract NFTCollectionV1 is
+    ERC721Upgradeable,
+    ERC721URIStorageUpgradeable,
+    OwnableUpgradeable,
+    UUPSUpgradeable,
+    ERC2981Upgradeable
+{
     uint256 private _tokenIdCounter;
     uint256 public constant MAX_SUPPLY = 10000;
     uint256 public mintPrice = 0.01 ether;
@@ -22,11 +30,7 @@ contract MyNFTV1 is ERC721Upgradeable, ERC721URIStorageUpgradeable, OwnableUpgra
     // 版税比例（基点，10000 = 100%）
     uint96 private _royaltyBps = 1000; // 10%
 
-    event NFTMinted(
-        address indexed minter,
-        uint256 indexed tokenId,
-        string uri
-    );
+    event NFTMinted(address indexed minter, uint256 indexed tokenId, string uri);
 
     /// @custom:oz-upgrades-constructor
     constructor() {
@@ -40,12 +44,10 @@ contract MyNFTV1 is ERC721Upgradeable, ERC721URIStorageUpgradeable, OwnableUpgra
      * @param royaltyReceiver_ 版税接收地址
      * @param royaltyBps_ 版税比例（基点）
      */
-    function initialize(
-        string memory name,
-        string memory symbol,
-        address royaltyReceiver_,
-        uint96 royaltyBps_
-    ) public initializer {
+    function initialize(string memory name, string memory symbol, address royaltyReceiver_, uint96 royaltyBps_)
+        public
+        initializer
+    {
         require(royaltyReceiver_ != address(0), "Invalid royalty receiver");
         require(royaltyBps_ <= 1000, "Royalty too high");
 
@@ -81,13 +83,12 @@ contract MyNFTV1 is ERC721Upgradeable, ERC721URIStorageUpgradeable, OwnableUpgra
      * @return receiver 版税接收地址
      * @return royaltyAmount 版税金额
      */
-    function royaltyInfo(
-        uint256,
-        uint256 salePrice
-    ) public view override returns (
-        address receiver,
-        uint256 royaltyAmount
-    ) {
+    function royaltyInfo(uint256, uint256 salePrice)
+        public
+        view
+        override
+        returns (address receiver, uint256 royaltyAmount)
+    {
         receiver = _royaltyReceiver;
         royaltyAmount = (salePrice * _royaltyBps) / 10000;
     }

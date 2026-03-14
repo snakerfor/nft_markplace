@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title MyTokenV1
  * @dev 可升级的 ERC20 代币合约
  */
-contract MyTokenV1 is ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
-
+contract PaymentTokenV1 is ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     /// @custom:oz-upgrades-constructor
     constructor() {
         _disableInitializers();
@@ -23,12 +22,10 @@ contract MyTokenV1 is ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
      * @param initialSupply 初始供应量
      * @param recipient 初始代币接收地址
      */
-    function initialize(
-        string memory name,
-        string memory symbol,
-        uint256 initialSupply,
-        address recipient
-    ) public initializer {
+    function initialize(string memory name, string memory symbol, uint256 initialSupply, address recipient)
+        public
+        initializer
+    {
         __ERC20_init(name, symbol);
         __Ownable_init(msg.sender);
         _mint(recipient, initialSupply);

@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title IERC2981
  * @dev ERC2981版税标准接口
  */
 interface IERC2981 is IERC165 {
-    function royaltyInfo(
-        uint256 tokenId,
-        uint256 salePrice
-    ) external view returns (
-        address receiver,
-        uint256 royaltyAmount
-    );
+    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+        external
+        view
+        returns (address receiver, uint256 royaltyAmount);
 }
 
 /**
@@ -25,85 +22,70 @@ interface IERC2981 is IERC165 {
  * @notice 使用ReentrancyGuard防止重入攻击
  */
 contract NFTMarketplace is ReentrancyGuard {
-    
     /**
      * @dev 挂单结构体
      */
     struct Listing {
-        address seller;        // 卖家地址
-        address nftContract;    // NFT合约地址
-        uint256 tokenId;         // Token ID
-        uint256 price;          // 售价（wei）
-        bool active;            // 是否激活
+        address seller; // 卖家地址
+        address nftContract; // NFT合约地址
+        uint256 tokenId; // Token ID
+        uint256 price; // 售价（wei）
+        bool active; // 是否激活
     }
-    
+
     /**
      * @dev 拍卖结构体
      */
     struct Auction {
-        address seller;           // 卖家地址
-        address nftContract;      // NFT合约地址
-        uint256 tokenId;          // Token ID
-        uint256 startPrice;       // 起拍价
-        uint256 highestBid;       // 当前最高出价
-        address highestBidder;    // 当前最高出价者
-        uint256 endTime;          // 拍卖结束时间
-        bool active;              // 是否激活
+        address seller; // 卖家地址
+        address nftContract; // NFT合约地址
+        uint256 tokenId; // Token ID
+        uint256 startPrice; // 起拍价
+        uint256 highestBid; // 当前最高出价
+        address highestBidder; // 当前最高出价者
+        uint256 endTime; // 拍卖结束时间
+        bool active; // 是否激活
     }
-    
+
     // 挂单映射
     mapping(uint256 => Listing) public listings;
     uint256 public listingCounter;
-    
+
     // 拍卖映射
     mapping(uint256 => Auction) public auctions;
     uint256 public auctionCounter;
-    
+
     // 待退款映射（用于拍卖）
     mapping(uint256 => mapping(address => uint256)) public pendingReturns;
-    
+
     // 平台手续费（基点，10000 = 100%）
     uint256 public platformFee = 250; // 2.5%
-    
+
     // 手续费接收地址
     address public feeRecipient;
-    
+
     /**
      * @dev NFT上架事件
      */
     event NFTListed(
-        uint256 indexed listingId,
-        address indexed seller,
-        address indexed nftContract,
-        uint256 tokenId,
-        uint256 price
+        uint256 indexed listingId, address indexed seller, address indexed nftContract, uint256 tokenId, uint256 price
     );
-    
+
     /**
      * @dev NFT下架事件
      */
-    event NFTDelisted(
-        uint256 indexed listingId
-    );
-    
+    event NFTDelisted(uint256 indexed listingId);
+
     /**
      * @dev 价格更新事件
      */
-    event PriceUpdated(
-        uint256 indexed listingId,
-        uint256 newPrice
-    );
-    
+    event PriceUpdated(uint256 indexed listingId, uint256 newPrice);
+
     /**
      * @dev NFT售出事件
      */
-    event NFTSold(
-        uint256 indexed listingId,
-        address indexed buyer,
-        address indexed seller,
-        uint256 price
-    );
-    
+    event NFTSold(uint256 indexed listingId, address indexed buyer, address indexed seller, uint256 price);
+
     /**
      * @dev 拍卖创建事件
      */
@@ -115,25 +97,17 @@ contract NFTMarketplace is ReentrancyGuard {
         uint256 startPrice,
         uint256 endTime
     );
-    
+
     /**
      * @dev 出价事件
      */
-    event BidPlaced(
-        uint256 indexed auctionId,
-        address indexed bidder,
-        uint256 amount
-    );
-    
+    event BidPlaced(uint256 indexed auctionId, address indexed bidder, uint256 amount);
+
     /**
      * @dev 拍卖结束事件
      */
-    event AuctionEnded(
-        uint256 indexed auctionId,
-        address indexed winner,
-        uint256 finalPrice
-    );
-    
+    event AuctionEnded(uint256 indexed auctionId, address indexed winner, uint256 finalPrice);
+
     /**
      * @dev 构造函数
      * @param _feeRecipient 手续费接收地址
@@ -142,7 +116,7 @@ contract NFTMarketplace is ReentrancyGuard {
         require(_feeRecipient != address(0), "Invalid fee recipient");
         feeRecipient = _feeRecipient;
     }
-    
+
     /**
      * @dev 上架NFT
      * @param nftContract NFT合约地址
@@ -150,62 +124,46 @@ contract NFTMarketplace is ReentrancyGuard {
      * @param price 售价（wei）
      * @return listingId 挂单ID
      */
-    function listNft(
-        address nftContract,
-        uint256 tokenId,
-        uint256 price
-    ) external returns (uint256) {
+    function listNft(address nftContract, uint256 tokenId, uint256 price) external returns (uint256) {
         require(price > 0, "Price must be greater than 0");
         require(nftContract != address(0), "Invalid NFT contract");
-        
+
         IERC721 nft = IERC721(nftContract);
-        
+
         // 验证所有权
         require(nft.ownerOf(tokenId) == msg.sender, "Not the owner");
-        
+
         // 验证授权
         require(
-            nft.getApproved(tokenId) == address(this) ||
-            nft.isApprovedForAll(msg.sender, address(this)),
+            nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)),
             "Marketplace not approved"
         );
-        
+
         // 创建挂单
         listingCounter++;
-        listings[listingCounter] = Listing({
-            seller: msg.sender,
-            nftContract: nftContract,
-            tokenId: tokenId,
-            price: price,
-            active: true
-        });
-        
-        emit NFTListed(
-            listingCounter,
-            msg.sender,
-            nftContract,
-            tokenId,
-            price
-        );
-        
+        listings[listingCounter] =
+            Listing({seller: msg.sender, nftContract: nftContract, tokenId: tokenId, price: price, active: true});
+
+        emit NFTListed(listingCounter, msg.sender, nftContract, tokenId, price);
+
         return listingCounter;
     }
-    
+
     /**
      * @dev 下架NFT
      * @param listingId 挂单ID
      */
     function delistNft(uint256 listingId) external {
         Listing storage listing = listings[listingId];
-        
+
         require(listing.active, "Listing not active");
         require(listing.seller == msg.sender, "Not the seller");
-        
+
         listing.active = false;
-        
+
         emit NFTDelisted(listingId);
     }
-    
+
     /**
      * @dev 更新挂单价格
      * @param listingId 挂单ID
@@ -213,16 +171,16 @@ contract NFTMarketplace is ReentrancyGuard {
      */
     function updatePrice(uint256 listingId, uint256 newPrice) external {
         require(newPrice > 0, "Price must be greater than 0");
-        
+
         Listing storage listing = listings[listingId];
         require(listing.active, "Listing not active");
         require(listing.seller == msg.sender, "Not the seller");
-        
+
         listing.price = newPrice;
-        
+
         emit PriceUpdated(listingId, newPrice);
     }
-    
+
     /**
      * @dev 购买NFT
      * @param listingId 挂单ID
@@ -230,58 +188,49 @@ contract NFTMarketplace is ReentrancyGuard {
      */
     function buyNft(uint256 listingId) external payable nonReentrant {
         Listing storage listing = listings[listingId];
-        
+
         // 检查挂单状态
         require(listing.active, "Listing not active");
         require(msg.value >= listing.price, "Insufficient payment");
         require(msg.sender != listing.seller, "Cannot buy your own NFT");
-        
+
         // 先更新状态（CEI原则）
         listing.active = false;
-        
+
         // 计算手续费
         uint256 fee = (listing.price * platformFee) / 10000;
-        
+
         // 获取版税信息
-        (address royaltyReceiver, uint256 royaltyAmount) = _getRoyaltyInfo(
-            listing.nftContract,
-            listing.tokenId,
-            listing.price
-        );
-        
+        (address royaltyReceiver, uint256 royaltyAmount) =
+            _getRoyaltyInfo(listing.nftContract, listing.tokenId, listing.price);
+
         // 计算卖家收益
         uint256 sellerAmount = listing.price - fee - royaltyAmount;
-        
+
         // 转移NFT
-        IERC721(listing.nftContract).safeTransferFrom(
-            listing.seller,
-            msg.sender,
-            listing.tokenId
-        );
-        
+        IERC721(listing.nftContract).safeTransferFrom(listing.seller, msg.sender, listing.tokenId);
+
         // 资金分配：版税 -> 平台手续费 -> 卖家收益
         if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
-            (bool successRoyalty, ) = royaltyReceiver.call{value: royaltyAmount}("");
+            (bool successRoyalty,) = royaltyReceiver.call{value: royaltyAmount}("");
             require(successRoyalty, "Royalty transfer failed");
         }
-        
-        (bool successSeller, ) = listing.seller.call{value: sellerAmount}("");
+
+        (bool successSeller,) = listing.seller.call{value: sellerAmount}("");
         require(successSeller, "Transfer to seller failed");
-        
-        (bool successFee, ) = feeRecipient.call{value: fee}("");
+
+        (bool successFee,) = feeRecipient.call{value: fee}("");
         require(successFee, "Transfer fee failed");
-        
+
         // 退还多余资金
         if (msg.value > listing.price) {
-            (bool successRefund, ) = msg.sender.call{
-                value: msg.value - listing.price
-            }("");
+            (bool successRefund,) = msg.sender.call{value: msg.value - listing.price}("");
             require(successRefund, "Refund failed");
         }
-        
+
         emit NFTSold(listingId, msg.sender, listing.seller, listing.price);
     }
-    
+
     /**
      * @dev 创建拍卖
      * @param nftContract NFT合约地址
@@ -290,28 +239,25 @@ contract NFTMarketplace is ReentrancyGuard {
      * @param durationHours 拍卖时长（小时）
      * @return auctionId 拍卖ID
      */
-    function createAuction(
-        address nftContract,
-        uint256 tokenId,
-        uint256 startPrice,
-        uint256 durationHours
-    ) external returns (uint256) {
+    function createAuction(address nftContract, uint256 tokenId, uint256 startPrice, uint256 durationHours)
+        external
+        returns (uint256)
+    {
         require(startPrice > 0, "Start price must be greater than 0");
         require(durationHours >= 1, "Duration must be at least 1 hour");
         require(nftContract != address(0), "Invalid NFT contract");
-        
+
         IERC721 nft = IERC721(nftContract);
-        
+
         // 验证所有权
         require(nft.ownerOf(tokenId) == msg.sender, "Not the owner");
-        
+
         // 验证授权
         require(
-            nft.getApproved(tokenId) == address(this) ||
-            nft.isApprovedForAll(msg.sender, address(this)),
+            nft.getApproved(tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)),
             "Marketplace not approved"
         );
-        
+
         // 创建拍卖
         auctionCounter++;
         auctions[auctionCounter] = Auction({
@@ -324,19 +270,14 @@ contract NFTMarketplace is ReentrancyGuard {
             endTime: block.timestamp + (durationHours * 1 hours),
             active: true
         });
-        
+
         emit AuctionCreated(
-            auctionCounter,
-            msg.sender,
-            nftContract,
-            tokenId,
-            startPrice,
-            auctions[auctionCounter].endTime
+            auctionCounter, msg.sender, nftContract, tokenId, startPrice, auctions[auctionCounter].endTime
         );
-        
+
         return auctionCounter;
     }
-    
+
     /**
      * @dev 出价
      * @param auctionId 拍卖ID
@@ -344,11 +285,11 @@ contract NFTMarketplace is ReentrancyGuard {
      */
     function placeBid(uint256 auctionId) external payable {
         Auction storage auction = auctions[auctionId];
-        
+
         require(auction.active, "Auction not active");
         require(block.timestamp < auction.endTime, "Auction ended");
         require(msg.sender != auction.seller, "Seller cannot bid");
-        
+
         // 计算最低出价
         uint256 minBid;
         if (auction.highestBid == 0) {
@@ -356,21 +297,21 @@ contract NFTMarketplace is ReentrancyGuard {
         } else {
             minBid = auction.highestBid + (auction.highestBid * 5 / 100); // 5% increment
         }
-        
+
         require(msg.value >= minBid, "Bid too low");
-        
+
         // 如果有之前的出价者，记录他们的待退款金额
         if (auction.highestBidder != address(0)) {
             pendingReturns[auctionId][auction.highestBidder] += auction.highestBid;
         }
-        
+
         // 更新最高出价
         auction.highestBid = msg.value;
         auction.highestBidder = msg.sender;
-        
+
         emit BidPlaced(auctionId, msg.sender, msg.value);
     }
-    
+
     /**
      * @dev 提取出价退款
      * @param auctionId 拍卖ID
@@ -379,13 +320,13 @@ contract NFTMarketplace is ReentrancyGuard {
     function withdrawBid(uint256 auctionId) external {
         uint256 amount = pendingReturns[auctionId][msg.sender];
         require(amount > 0, "No pending return");
-        
+
         pendingReturns[auctionId][msg.sender] = 0;
-        
-        (bool success, ) = msg.sender.call{value: amount}("");
+
+        (bool success,) = msg.sender.call{value: amount}("");
         require(success, "Transfer failed");
     }
-    
+
     /**
      * @dev 结束拍卖
      * @param auctionId 拍卖ID
@@ -393,54 +334,43 @@ contract NFTMarketplace is ReentrancyGuard {
      */
     function endAuction(uint256 auctionId) external nonReentrant {
         Auction storage auction = auctions[auctionId];
-        
+
         require(auction.active, "Auction not active");
         require(block.timestamp >= auction.endTime, "Auction not ended");
-        
+
         auction.active = false;
-        
+
         if (auction.highestBidder != address(0)) {
             // 有人出价，进行结算
             uint256 fee = (auction.highestBid * platformFee) / 10000;
-            
-            (address royaltyReceiver, uint256 royaltyAmount) = _getRoyaltyInfo(
-                auction.nftContract,
-                auction.tokenId,
-                auction.highestBid
-            );
-            
+
+            (address royaltyReceiver, uint256 royaltyAmount) =
+                _getRoyaltyInfo(auction.nftContract, auction.tokenId, auction.highestBid);
+
             uint256 sellerAmount = auction.highestBid - fee - royaltyAmount;
-            
+
             // 转移NFT
-            IERC721(auction.nftContract).safeTransferFrom(
-                auction.seller,
-                auction.highestBidder,
-                auction.tokenId
-            );
-            
+            IERC721(auction.nftContract).safeTransferFrom(auction.seller, auction.highestBidder, auction.tokenId);
+
             // 资金分配
             if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
-                (bool successRoyalty, ) = royaltyReceiver.call{value: royaltyAmount}("");
+                (bool successRoyalty,) = royaltyReceiver.call{value: royaltyAmount}("");
                 require(successRoyalty, "Royalty transfer failed");
             }
-            
-            (bool successSeller, ) = auction.seller.call{value: sellerAmount}("");
+
+            (bool successSeller,) = auction.seller.call{value: sellerAmount}("");
             require(successSeller, "Transfer to seller failed");
-            
-            (bool successFee, ) = feeRecipient.call{value: fee}("");
+
+            (bool successFee,) = feeRecipient.call{value: fee}("");
             require(successFee, "Transfer fee failed");
-            
-            emit AuctionEnded(
-                auctionId,
-                auction.highestBidder,
-                auction.highestBid
-            );
+
+            emit AuctionEnded(auctionId, auction.highestBidder, auction.highestBid);
         } else {
             // 没有人出价，拍卖流拍
             emit AuctionEnded(auctionId, address(0), 0);
         }
     }
-    
+
     /**
      * @dev 获取版税信息
      * @param nftContract NFT合约地址
@@ -450,24 +380,21 @@ contract NFTMarketplace is ReentrancyGuard {
      * @return royaltyAmount 版税金额
      * @notice 内部函数，检查NFT合约是否支持ERC2981标准
      */
-    function _getRoyaltyInfo(
-        address nftContract,
-        uint256 tokenId,
-        uint256 salePrice
-    ) internal view returns (address receiver, uint256 royaltyAmount) {
+    function _getRoyaltyInfo(address nftContract, uint256 tokenId, uint256 salePrice)
+        internal
+        view
+        returns (address receiver, uint256 royaltyAmount)
+    {
         // 检查NFT合约是否支持ERC2981
         if (IERC165(nftContract).supportsInterface(type(IERC2981).interfaceId)) {
-            (receiver, royaltyAmount) = IERC2981(nftContract).royaltyInfo(
-                tokenId,
-                salePrice
-            );
+            (receiver, royaltyAmount) = IERC2981(nftContract).royaltyInfo(tokenId, salePrice);
         } else {
             // 不支持版税，返回零地址和零金额
             receiver = address(0);
             royaltyAmount = 0;
         }
     }
-    
+
     /**
      * @dev 查询挂单信息
      * @param listingId 挂单ID
@@ -477,23 +404,15 @@ contract NFTMarketplace is ReentrancyGuard {
      * @return price 价格
      * @return active 是否激活
      */
-    function getListing(uint256 listingId) external view returns (
-        address seller,
-        address nftContract,
-        uint256 tokenId,
-        uint256 price,
-        bool active
-    ) {
+    function getListing(uint256 listingId)
+        external
+        view
+        returns (address seller, address nftContract, uint256 tokenId, uint256 price, bool active)
+    {
         Listing memory listing = listings[listingId];
-        return (
-            listing.seller,
-            listing.nftContract,
-            listing.tokenId,
-            listing.price,
-            listing.active
-        );
+        return (listing.seller, listing.nftContract, listing.tokenId, listing.price, listing.active);
     }
-    
+
     /**
      * @dev 查询拍卖信息
      * @param auctionId 拍卖ID
@@ -506,16 +425,20 @@ contract NFTMarketplace is ReentrancyGuard {
      * @return endTime 结束时间
      * @return active 是否激活
      */
-    function getAuction(uint256 auctionId) external view returns (
-        address seller,
-        address nftContract,
-        uint256 tokenId,
-        uint256 startPrice,
-        uint256 highestBid,
-        address highestBidder,
-        uint256 endTime,
-        bool active
-    ) {
+    function getAuction(uint256 auctionId)
+        external
+        view
+        returns (
+            address seller,
+            address nftContract,
+            uint256 tokenId,
+            uint256 startPrice,
+            uint256 highestBid,
+            address highestBidder,
+            uint256 endTime,
+            bool active
+        )
+    {
         Auction memory auction = auctions[auctionId];
         return (
             auction.seller,
@@ -528,7 +451,7 @@ contract NFTMarketplace is ReentrancyGuard {
             auction.active
         );
     }
-    
+
     /**
      * @dev 设置平台手续费
      * @param newFee 新的手续费（基点）
@@ -539,7 +462,7 @@ contract NFTMarketplace is ReentrancyGuard {
         require(newFee <= 1000, "Fee too high"); // 最大10%
         platformFee = newFee;
     }
-    
+
     /**
      * @dev 更新手续费接收地址
      * @param newRecipient 新的接收地址

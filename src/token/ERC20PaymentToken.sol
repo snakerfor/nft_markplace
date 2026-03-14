@@ -7,7 +7,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @title MyERC20
  * @dev 一个简单的 ERC20 代币合约，使用 OpenZeppelin 实现
  */
-contract MyERC20 is ERC20 {
+contract ERC20PaymentToken is ERC20 {
     /**
      * @dev 构造函数
      * @param name 代币名称
@@ -15,12 +15,9 @@ contract MyERC20 is ERC20 {
      * @param initialSupply 初始供应量（wei 单位）
      * @param recipient 初始代币接收地址
      */
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint256 initialSupply,
-        address recipient
-    ) ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol, uint256 initialSupply, address recipient)
+        ERC20(name, symbol)
+    {
         // 将初始供应量的代币铸造给指定地址
         _mint(recipient, initialSupply);
     }
