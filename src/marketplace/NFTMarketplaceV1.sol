@@ -298,7 +298,7 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
      * @dev 提取出价退款
      * @param auctionId 拍卖ID
      */
-    function withdrawBid(uint256 auctionId) external {
+    function withdrawBid(uint256 auctionId) external nonReentrant {
         uint256 amount = pendingReturns[auctionId][msg.sender];
         require(amount > 0, "No pending return");
 

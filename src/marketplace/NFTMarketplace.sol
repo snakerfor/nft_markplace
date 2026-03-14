@@ -317,7 +317,7 @@ contract NFTMarketplace is ReentrancyGuard {
      * @param auctionId 拍卖ID
      * @notice 被超越的出价者可以提取他们的资金
      */
-    function withdrawBid(uint256 auctionId) external {
+    function withdrawBid(uint256 auctionId) external nonReentrant {
         uint256 amount = pendingReturns[auctionId][msg.sender];
         require(amount > 0, "No pending return");
 

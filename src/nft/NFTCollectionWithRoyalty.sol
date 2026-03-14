@@ -133,6 +133,8 @@ contract NFTCollectionWithRoyalty is ERC721, ERC721URIStorage, Ownable, IERC2981
     function withdraw() public onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No balance to withdraw");
-        payable(owner()).transfer(balance);
+
+        (bool success, ) = payable(owner()).call{value: balance}("");
+        require(success, "Withdraw failed");
     }
 }
