@@ -31,6 +31,7 @@ contract NFTCollectionV1 is
     uint96 private _royaltyBps = 1000; // 10%
 
     event NFTMinted(address indexed minter, uint256 indexed tokenId, string uri);
+    event RoyaltyInfoUpdated(address indexed receiver, uint96 bps);
 
     /// @custom:oz-upgrades-constructor
     constructor() {
@@ -104,6 +105,8 @@ contract NFTCollectionV1 is
 
         _royaltyReceiver = receiver;
         _royaltyBps = bps;
+
+        emit RoyaltyInfoUpdated(receiver, bps);
     }
 
     /**

@@ -109,6 +109,21 @@ contract NFTMarketplace is ReentrancyGuard {
     event AuctionEnded(uint256 indexed auctionId, address indexed winner, uint256 finalPrice);
 
     /**
+     * @dev 出价退款事件
+     */
+    event BidWithdrawn(uint256 indexed auctionId, address indexed bidder, uint256 amount);
+
+    /**
+     * @dev 手续费接收地址更新事件
+     */
+    event FeeRecipientUpdated(address indexed oldRecipient, address indexed newRecipient);
+
+    /**
+     * @dev 平台手续费更新事件
+     */
+    event PlatformFeeUpdated(address indexed setter, uint256 oldFee, uint256 newFee);
+
+    /**
      * @dev 构造函数
      * @param _feeRecipient 手续费接收地址
      */
@@ -325,6 +340,8 @@ contract NFTMarketplace is ReentrancyGuard {
 
         (bool success,) = msg.sender.call{value: amount}("");
         require(success, "Transfer failed");
+
+        emit BidWithdrawn(auctionId, msg.sender, amount);
     }
 
     /**
@@ -460,7 +477,11 @@ contract NFTMarketplace is ReentrancyGuard {
     function setPlatformFee(uint256 newFee) external {
         require(msg.sender == feeRecipient, "Not fee recipient");
         require(newFee <= 1000, "Fee too high"); // 最大10%
+
+        uint256 oldFee = platformFee;
         platformFee = newFee;
+
+        emit PlatformFeeUpdated(msg.sender, oldFee, newFee);
     }
 
     /**
@@ -471,7 +492,11 @@ contract NFTMarketplace is ReentrancyGuard {
     function updateFeeRecipient(address newRecipient) external {
         require(msg.sender == feeRecipient, "Not fee recipient");
         require(newRecipient != address(0), "Invalid address");
+
+        address oldRecipient = feeRecipient;
         feeRecipient = newRecipient;
+
+        emit FeeRecipientUpdated(oldRecipient, newRecipient);
     }
 }
 

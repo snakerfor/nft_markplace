@@ -23,6 +23,10 @@ contract DeployScript is Script {
         console.log("Royalty receiver:", royaltyReceiver);
         console.log("Fee recipient:", feeRecipient);
 
+        address tokenProxyAddress = vm.envOr("TOKEN_PROXY",address(0));
+        address nftProxyAddress = vm.envOr("NFT_PROXY",address(0));
+        address marketplaceProxyAddress = vm.envOr("MARKETPLACE_PROXY",address(0));
+
         vm.startBroadcast(deployerPrivateKey);
 
         // 1. 部署 MyToken (UUPS Proxy)
