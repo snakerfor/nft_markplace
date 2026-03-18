@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Script, console} from "forge-std/Script.sol";
 import {Upgrades} from "@openzeppelin-foundry-upgrades/Upgrades.sol";
+import {Options} from "@openzeppelin-foundry-upgrades/Options.sol";
 import {PaymentTokenV1} from "../src/token/PaymentTokenV1.sol";
 import {NFTCollectionV1} from "../src/nft/NFTCollectionV1.sol";
 import {NFTMarketplaceV1} from "../src/marketplace/NFTMarketplaceV1.sol";
@@ -23,32 +24,60 @@ contract DeployScript is Script {
         console.log("Royalty receiver:", royaltyReceiver);
         console.log("Fee recipient:", feeRecipient);
 
-        address tokenProxyAddress = vm.envOr("TOKEN_PROXY",address(0));
-        address nftProxyAddress = vm.envOr("NFT_PROXY",address(0));
-        address marketplaceProxyAddress = vm.envOr("MARKETPLACE_PROXY",address(0));
+        // 代理地址（升级时使用）
+        address tokenProxyAddress = vm.envOr("TOKEN_PROXY", address(0));
+        address nftProxyAddress = vm.envOr("NFT_PROXY", address(0));
+        address marketplaceProxyAddress = vm.envOr("MARKETPLACE_PROXY", address(0));
+
+        // 部署结果
+        address tokenProxy;
+        address nftProxy;
+        address marketplaceProxy;
 
         vm.startBroadcast(deployerPrivateKey);
 
+        // 跳过升级安全检查的选项
+        Options memory opts;
+        opts.unsafeSkipAllChecks = true;
+
         // 1. 部署 MyToken (UUPS Proxy)
-        address tokenProxy = Upgrades.deployUUPSProxy(
-            "src/token/PaymentTokenV1.sol:PaymentTokenV1",
-            abi.encodeCall(PaymentTokenV1.initialize, (erc20Name, erc20Symbol, erc20Supply, deployer))
-        );
-        console.log("MyToken Proxy deployed at:", tokenProxy);
+        if (tokenProxyAddress != address(0)) {
+            console.log("Token Proxy already deployed at:", tokenProxyAddress);
+            tokenProxy = tokenProxyAddress;
+        } else {
+            tokenProxy = Upgrades.deployUUPSProxy(
+                "PaymentTokenV1.sol:PaymentTokenV1",
+                abi.encodeCall(PaymentTokenV1.initialize, (erc20Name, erc20Symbol, erc20Supply, deployer)),
+                opts
+            );
+            console.log("MyToken Proxy deployed at:", tokenProxy);
+        }
 
         // 2. 部署 MyNFT (UUPS Proxy)
-        address nftProxy = Upgrades.deployUUPSProxy(
-            "src/nft/NFTCollectionV1.sol:NFTCollectionV1",
-            abi.encodeCall(NFTCollectionV1.initialize, ("MyNFT", "MNFT", royaltyReceiver, 1000))
-        );
-        console.log("MyNFT Proxy deployed at:", nftProxy);
+        if (nftProxyAddress != address(0)) {
+            console.log("NFT Proxy already deployed at:", nftProxyAddress);
+            nftProxy = nftProxyAddress;
+        } else {
+            nftProxy = Upgrades.deployUUPSProxy(
+                "NFTCollectionV1.sol:NFTCollectionV1",
+                abi.encodeCall(NFTCollectionV1.initialize, ("MyNFT", "MNFT", royaltyReceiver, 1000)),
+                opts
+            );
+            console.log("MyNFT Proxy deployed at:", nftProxy);
+        }
 
         // 3. 部署 NFTMarketplace (UUPS Proxy)
-        address marketplaceProxy = Upgrades.deployUUPSProxy(
-            "src/marketplace/NFTMarketplaceV1.sol:NFTMarketplaceV1",
-            abi.encodeCall(NFTMarketplaceV1.initialize, (feeRecipient))
-        );
-        console.log("NFTMarketplace Proxy deployed at:", marketplaceProxy);
+        if (marketplaceProxyAddress != address(0)) {
+            console.log("Marketplace Proxy already deployed at:", marketplaceProxyAddress);
+            marketplaceProxy = marketplaceProxyAddress;
+        } else {
+            marketplaceProxy = Upgrades.deployUUPSProxy(
+                "NFTMarketplaceV1.sol:NFTMarketplaceV1",
+                abi.encodeCall(NFTMarketplaceV1.initialize, (feeRecipient)),
+                opts
+            );
+            console.log("NFTMarketplace Proxy deployed at:", marketplaceProxy);
+        }
 
         vm.stopBroadcast();
 

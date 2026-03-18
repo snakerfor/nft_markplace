@@ -18,7 +18,7 @@ https://book.getfoundry.sh/
 ### Build
 
 ```shell
-$ forge build
+$ source .env &&  forge build
 ```
 
 ### Test
@@ -48,7 +48,7 @@ $ anvil
 ### Deploy
 
 ```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+$ source .env && forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC --broadcast --ffi 
 ```
 
 ### Cast
