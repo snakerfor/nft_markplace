@@ -8,6 +8,12 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+/// @dev Chainlink 价格预言机接口
+interface IPriceOracle {
+    function getEthValueInUsd(uint256 ethAmount) external view returns (uint256);
+    function getTokenValueInUsd(uint256 tokenAmount) external view returns (uint256);
+}
+
 /**
  * @title NFTMarketplaceV1
  * @dev 可升级的NFT交易市场合约，支持上架、购买、版税和拍卖功能
@@ -56,6 +62,9 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
     // 手续费接收地址
     address public feeRecipient;
 
+    // Chainlink 价格预言机地址
+    address public priceOracle;
+
     /**
      * @dev NFT上架事件
      */
@@ -92,8 +101,9 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
 
     /**
      * @dev 出价事件
+     * @param usdValue 出价的 USD 价值
      */
-    event BidPlaced(uint256 indexed auctionId, address indexed bidder, uint256 amount);
+    event BidPlaced(uint256 indexed auctionId, address indexed bidder, uint256 amount, uint256 usdValue);
 
     /**
      * @dev 拍卖结束事件
@@ -115,6 +125,11 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
      */
     event PlatformFeeUpdated(address indexed setter, uint256 oldFee, uint256 newFee);
 
+    /**
+     * @dev 预言机地址更新事件
+     */
+    event PriceOracleUpdated(address indexed oldOracle, address indexed newOracle);
+
     /// @custom:oz-upgrades-constructor
     constructor() {
         _disableInitializers();
@@ -123,14 +138,16 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
     /**
      * @dev 初始化函数
      * @param _feeRecipient 手续费接收地址
+     * @param _priceOracle Chainlink 价格预言机地址
      */
-    function initialize(address _feeRecipient) public initializer {
+    function initialize(address _feeRecipient, address _priceOracle) public initializer {
         require(_feeRecipient != address(0), "Invalid fee recipient");
 
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
 
         feeRecipient = _feeRecipient;
+        priceOracle = _priceOracle;
     }
 
     /**
@@ -306,7 +323,10 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
         auction.highestBid = msg.value;
         auction.highestBidder = msg.sender;
 
-        emit BidPlaced(auctionId, msg.sender, msg.value);
+        // 计算 USD 价值
+        uint256 usdValue = _getEthUsdValue(msg.value);
+
+        emit BidPlaced(auctionId, msg.sender, msg.value, usdValue);
     }
 
     /**
@@ -455,6 +475,42 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
         feeRecipient = newRecipient;
 
         emit FeeRecipientUpdated(oldRecipient, newRecipient);
+    }
+
+    /**
+     * @dev 将 ETH 价值转换为 USD
+     * @param ethAmount ETH 数量 (wei)
+     * @return usdValue USD 价值
+     */
+    function _getEthUsdValue(uint256 ethAmount) internal view returns (uint256) {
+        if (priceOracle == address(0)) {
+            return 0;
+        }
+        try IPriceOracle(priceOracle).getEthValueInUsd(ethAmount) returns (uint256 value) {
+            return value;
+        } catch {
+            return 0;
+        }
+    }
+
+    /**
+     * @dev 获取拍卖当前最高出价的 USD 价值
+     * @param auctionId 拍卖ID
+     * @return usdValue USD 价值
+     */
+    function getHighestBidUsdValue(uint256 auctionId) external view returns (uint256) {
+        Auction memory auction = auctions[auctionId];
+        return _getEthUsdValue(auction.highestBid);
+    }
+
+    /**
+     * @dev 更新预言机地址
+     * @param newOracle 新的预言机地址
+     */
+    function updatePriceOracle(address newOracle) external onlyOwner {
+        address oldOracle = priceOracle;
+        priceOracle = newOracle;
+        emit PriceOracleUpdated(oldOracle, newOracle);
     }
 
     /**

@@ -14,7 +14,8 @@ remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "@openzeppelin/=lib/openzeppelin-contracts/",
     "@openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/",
-    "@forge-std/=lib/forge-std/src/"
+    "@forge-std/=lib/forge-std/src/",
+    "@chainlink/=lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/"
 ]
 
 [profile.ci]
