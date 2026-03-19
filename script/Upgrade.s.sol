@@ -35,8 +35,8 @@ contract UpgradeScript is Script {
         console.log("Marketplace upgraded");
 
         // 2. 更新 Marketplace 的预言机地址
-        NFTMarketplaceV1(marketplaceProxy).updatePriceOracle(priceOracle);
-        console.log("Marketplace priceOracle updated to:", priceOracle);
+        // NFTMarketplaceV1(marketplaceProxy).updatePriceOracle(priceOracle);
+        // console.log("Marketplace priceOracle updated to:", priceOracle);
 
         vm.stopBroadcast();
 

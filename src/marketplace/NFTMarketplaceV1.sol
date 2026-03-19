@@ -53,6 +53,9 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
     mapping(uint256 => Auction) public auctions;
     uint256 public auctionCounter;
 
+    // NFT拍卖映射
+    mapping(address => mapping (uint256 => uint256)) nftToken2AuctionId;
+
     // 待退款映射（用于拍卖）
     mapping(uint256 => mapping(address => uint256)) public pendingReturns;
 
@@ -289,6 +292,9 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
             active: true
         });
 
+        // 补充添加NFT拍卖映射
+        nftToken2AuctionId[nftContract][tokenId] = auctionCounter;
+
         emit AuctionCreated(
             auctionCounter, msg.sender, nftContract, tokenId, startPrice, auctions[auctionCounter].endTime
         );
@@ -356,6 +362,9 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
         require(block.timestamp >= auction.endTime, "Auction not ended");
 
         auction.active = false;
+
+        // 清除NFT拍卖映射中的合约
+        nftToken2AuctionId[auction.nftContract][auction.tokenId] = 0;
 
         if (auction.highestBidder != address(0)) {
             uint256 fee = (auction.highestBid * platformFee) / 10000;
