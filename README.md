@@ -51,6 +51,12 @@ $ anvil
 $ source .env && forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC --broadcast --ffi 
 ```
 
+### Upgrade
+
+```shell
+source .env && forge script script/Upgrade.s.sol --rpc-url $SEPOLIA_RPC --broadcast --ffi
+```
+
 ### Cast
 
 ```shell
