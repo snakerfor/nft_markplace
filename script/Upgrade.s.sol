@@ -8,7 +8,7 @@ import {NFTMarketplaceV1} from "../src/marketplace/NFTMarketplaceV1.sol";
 
 contract UpgradeScript is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.envUint("ETH_PRIVATE_KEY");
 
         // 从环境变量读取代理地址
         address tokenProxy = vm.envAddress("TOKEN_PROXY");

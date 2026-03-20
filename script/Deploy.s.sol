@@ -11,7 +11,7 @@ import {PriceOracle} from "../src/oracle/PriceOracle.sol";
 
 contract DeployScript is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.envUint("ETH_PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
 
         address royaltyReceiver = vm.envOr("ROYALTY_RECEIVER", deployer);
