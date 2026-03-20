@@ -53,7 +53,7 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
     mapping(uint256 => Auction) public auctions;
     uint256 public auctionCounter;
 
-    // NFT拍卖映射
+    // NFT拍卖映射（一个NFT只能对应一个拍卖）
     mapping(address => mapping (uint256 => uint256)) nftToken2AuctionId;
 
     // 待退款映射（用于拍卖）
@@ -270,6 +270,7 @@ contract NFTMarketplaceV1 is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuar
         require(startPrice > 0, "Start price must be greater than 0");
         require(durationHours >= 1, "Duration must be at least 1 hour");
         require(nftContract != address(0), "Invalid NFT contract");
+        require(nftToken2AuctionId[nftContract][tokenId] == 0, "Token is already in an auction");
 
         IERC721 nft = IERC721(nftContract);
 
